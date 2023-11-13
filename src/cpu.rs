@@ -8,7 +8,6 @@ pub struct Cpu {
     vx: [u8; 16],
     pc: u16,
     i: u16,
-    prev_pc: u16,
     ret_stack: Vec<u16>,
 }
 
@@ -18,7 +17,6 @@ impl Cpu {
             vx: [0; 16],
             pc: PROGRAM_START,
             i: 0,
-            prev_pc: 0,
             ret_stack: Vec::<u16>::new(),
         }
     }
@@ -38,12 +36,6 @@ impl Cpu {
         let y = ((instruction & 0x00F0) >> 4) as u8;
 
         println!("nnn={:?}, nn={:?}, n={:?}, x={}, y={}", nnn, nn, n, x, y);
-
-        if self.prev_pc == self.pc {
-            panic!("Please increment PC!");
-        }
-
-        self.prev_pc = self.pc;
 
         match (instruction & 0xF000) >> 12{
             0x0 => {
@@ -74,6 +66,15 @@ impl Cpu {
                 // skips next instruction if Reg VX equals NN
                 let vx = self.read_reg_vx(x);
                 if vx == nn {
+                    self.pc += 4;
+                } else {
+                    self.pc += 2;
+                }
+            },
+            0x4 => {
+                // skips next instruction if Reg VX doesn't equal NN
+                let vx = self.read_reg_vx(x);
+                if vx != nn {
                     self.pc += 4;
                 } else {
                     self.pc += 2;
@@ -190,6 +191,10 @@ impl Cpu {
                     0x15 => {
                         // sets delay timer to Reg VX
                         bus.set_delay_timer(self.read_reg_vx(x));
+                        self.pc += 2;
+                    },
+                    0x18 => {
+                        // TODO sets sound timer to Reg VX
                         self.pc += 2;
                     },
                     0x65 => {

@@ -65,9 +65,9 @@ fn main() {
 
     while window.is_open() && !window.is_key_down(Key::Escape) {
 
-        let keys_pressed = window.get_keys_pressed(KeyRepeat::No);
+        let keys_pressed = window.get_keys_pressed(KeyRepeat::Yes);
         let mut key = None;
-        
+
         if keys_pressed.len() > 0 {
             key = Some(keys_pressed[0]);
         }
@@ -89,8 +89,6 @@ fn main() {
                 buffer[y * WIDTH + x] = color_pixel;
             }
         }
-
-        std::thread::sleep_ms(16);
 
         window.update_with_buffer(&buffer, WIDTH, HEIGHT).unwrap();
     }
