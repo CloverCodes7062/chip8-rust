@@ -1,3 +1,4 @@
+
 const WIDTH: usize = 64;
 const HEIGHT: usize = 32;
 
@@ -12,57 +13,40 @@ impl Display {
         }
     }
 
-    pub fn get_index_from_coords(x:usize, y:usize) -> usize {
+    pub fn get_index_from_coords(x: usize, y: usize) -> usize {
         y * WIDTH + x
     }
 
-    pub fn debug_draw_byte(&mut self, byte:u8, x:u8, y:u8) -> bool {
-        let mut flipped = false;
-        let mut b = byte;
+    pub fn debug_draw_byte(&mut self, byte: u8, x: u8, y: u8) -> bool {
+        let mut erased = false;
         let mut coord_x = x as usize;
         let coord_y = y as usize;
+        let mut b = byte;
         
         for _ in 0..8 {
             let index = Display::get_index_from_coords(coord_x, coord_y);
-            match (b & 0b1000_0000) >> 7 {
-                0 => {
-                    if self.screen[index] == 1 {
-                        flipped = true;
-                    }
-                    self.screen[index] = 0;
-                },
-                1 => self.screen[index] = 1,
-                _=> unreachable!(),
-            };
+            let bit = (b & 0b1000_0000) >> 7;
+            let prev_value = self.screen[index];
+            self.screen[index] ^= bit;
+
+            if prev_value == 1 && self.screen[index] == 0 {
+                erased = true;
+            }
+
             coord_x += 1;
             b = b << 1;
         }
-        flipped
+
+        erased
     }
 
-    pub fn clear(&mut self){
+    pub fn clear(&mut self) {
         for pixel in self.screen.iter_mut() {
             *pixel = 0;
         }
     }
 
-    pub fn present(&self) {
-        for index in 0..self.screen.len() {
-            let pixel = self.screen[index];
-            if index % WIDTH == 0 {
-                print!("\n");
-            }
-            match pixel {
-                0 => print!("_"),
-                1 => print!("#"),
-                _ => unreachable!(),
-            }
-        }
-        print!("\n");
-    }
-
-    pub fn get_display_buffer(& self) -> &[u8] {
+    pub fn get_display_buffer(&self) -> &[u8] {
         &self.screen
     }
-
 }

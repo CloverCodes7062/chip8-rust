@@ -146,7 +146,7 @@ impl Cpu {
                     0xA1 => {
                         // if(key()!=VX) then skip the next instruction
                         let key = self.read_reg_vx(x);
-                        if !bus.key_pressed(key){
+                        if !bus.is_key_pressed(key){
                             self.pc += 4;
                         } else {
                             self.pc += 2;
@@ -155,7 +155,7 @@ impl Cpu {
                     0x9E => {
                         // if(key()==VX) then skip the next instruction
                         let key = self.read_reg_vx(x);
-                        if bus.key_pressed(key){
+                        if bus.is_key_pressed(key){
                             self.pc += 4;
                         } else {
                             self.pc += 2;
@@ -175,6 +175,17 @@ impl Cpu {
                         // sets Reg VX to value of delay timer
                         self.write_reg_vx(x, bus.get_delay_timer());
                         self.pc += 2;
+                    },
+                    0x0A => {
+                        // waits for a key press, stores the value of the key in Reg VX
+                        let key = bus.get_key_pressed();
+                        match key {
+                            Some(val) => {
+                                self.write_reg_vx(x, val);
+                                self.pc += 2;
+                            },
+                            None => (),
+                        }
                     },
                     0x15 => {
                         // sets delay timer to Reg VX
@@ -206,9 +217,9 @@ impl Cpu {
         println!("Drawing sprite at ({}, {})", x, y);
         let mut should_set_vf = false;
         
-        for y in 0..height {
-            let byte = bus.ram_read_byte(self.i + y as u16);
-            if bus.debug_draw_byte(byte, x, y) {
+        for sprite_y in 0..height {
+            let byte = bus.ram_read_byte(self.i + sprite_y as u16);
+            if bus.debug_draw_byte(byte, x, y + sprite_y) {
                 should_set_vf = true;
             }
         }
@@ -218,8 +229,6 @@ impl Cpu {
         } else {
             self.write_reg_vx(0xF, 0);
         }
-
-        bus.present_screen();
     }
 
     pub fn write_reg_vx(&mut self, index: u8, value: u8) {
