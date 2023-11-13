@@ -28,7 +28,7 @@ impl Cpu {
         let lo = bus.ram_read_byte(self.pc + 1) as u16;
         let instruction:u16 = (hi << 8) | lo;
 
-        println!("Instruction Read instruction {:#X}, hi: {:#X}, lo: {:#X}", instruction, hi, lo);
+        println!("Instruction Read instruction {:#X}: self.pc {:#X}, hi: {:#X}, lo: {:#X}", instruction, self.pc, hi, lo);
 
 
         let nnn = instruction & 0x0FFF;
@@ -121,8 +121,6 @@ impl Cpu {
                         self.write_reg_vx(x, diff as u8);
                         if diff < 0 {
                             self.write_reg_vx(0xF, 1);
-                        } else {
-                            self.write_reg_vx(0xF, 0);
                         }
                     },
                     6 => {
@@ -145,14 +143,13 @@ impl Cpu {
                     0xA1 => {
                         // if(key()!=VX) then skip the next instruction
                         let key = self.read_reg_vx(x);
-                        if bus.key_pressed(key){
-                            self.pc += 2
+                        if !bus.key_pressed(key){
+                            self.pc += 4;
                         } else {
-                            self.pc += 4
+                            self.pc += 2;
                         }
                     },
                     0x9E => {
-                        panic!();
                         // if(key()==VX) then skip the next instruction
                         let key = self.read_reg_vx(x);
                         if bus.key_pressed(key){
@@ -170,10 +167,33 @@ impl Cpu {
                 self.pc += 2;
             },
             0xF => {
-                // adds Reg VX to I
-                let vx = self.read_reg_vx(x);
-                self.i += vx as u16;
-                self.pc += 2;
+                match nn {
+                    0x07 => {
+                        // sets Reg VX to value of delay timer
+                        self.write_reg_vx(x, bus.get_delay_timer());
+                        self.pc += 2;
+                    },
+                    0x15 => {
+                        // sets delay timer to Reg VX
+                        bus.set_delay_timer(self.read_reg_vx(x));
+                        self.pc += 2;
+                    },
+                    0x65 => {
+                        // fills Reg VX with values from memory starting at address I
+                        for index in 0..x+1 {
+                            let value = bus.ram_read_byte(self.i + index as u16);
+                            self.write_reg_vx(index, value);
+                        }
+                        self.pc += 2;
+                    },
+                    0x1E => {
+                        // adds Reg VX to I
+                        let vx = self.read_reg_vx(x);
+                        self.i += vx as u16;
+                        self.pc += 2;
+                    },
+                    _=> panic!("Unknown 0xFX** instruction {:#X}:{:#X}", self.pc, instruction),
+                }
             },
             _=> panic!("Unknown instruction {:#X}:{:#X}", self.pc, instruction),
         }
@@ -211,6 +231,12 @@ impl Cpu {
 
 impl fmt::Debug for Cpu {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "pc: {:#X}, i: {:#X}, vx: {:?}", self.pc, self.i,  self.vx)
+       write!(f, "\npc: {:#X}\n", self.pc);
+       write!(f, "vx: ");
+       for item in self.vx.iter() {
+           write!(f, "{:#X} ", *item);
+       }
+       write!(f, "\n");
+       write!(f, "i: {:#X}\n", self.i)
     }
 }
