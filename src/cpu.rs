@@ -135,7 +135,10 @@ impl Cpu {
             },
             0xD => {
                 // draws sprite at (VX, VY) with width 8 and height N
-                self.debug_draw_sprite(bus, x, y, n);
+                let vx = self.read_reg_vx(x);
+                let vy = self.read_reg_vx(y);
+
+                self.debug_draw_sprite(bus, vx, vy, n);
                 self.pc += 2;
             },
             0xE => {

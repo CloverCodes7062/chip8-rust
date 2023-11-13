@@ -49,7 +49,6 @@ impl Bus {
         if self.delay_timer > 0 {
             self.delay_timer -= 1;
         }
-        self.delay_timer = 0
     }
 
     pub fn set_delay_timer(&mut self, value: u8) {
@@ -59,6 +58,11 @@ impl Bus {
     pub fn get_delay_timer(&self) -> u8 {
         self.delay_timer
     }
+
+    pub fn get_display_buffer(&self) -> &[u8] {
+        self.display.get_display_buffer()
+    }
+
 }
 
 impl fmt::Debug for Bus {
