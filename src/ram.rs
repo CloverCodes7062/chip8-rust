@@ -45,4 +45,11 @@ impl Ram {
         self.mem[address as usize]
     }
 
+    pub fn print_ram(&self) {
+        for i in 0..self.mem.len() {
+            print!("{} ", self.mem[i]);
+        }
+        print!("\n");
+    }
+
 }

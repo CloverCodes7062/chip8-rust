@@ -2,7 +2,7 @@ use chip8::Chip8;
 use minifb::{Key, KeyRepeat, Window, WindowOptions};
 use std::io::Read;
 use std::fs::File;
-use std::time::{Instant, Duration, self};
+use std::time::{Instant, Duration};
 use crate::display::Display;
 
 mod bus;
@@ -39,7 +39,7 @@ fn get_chip8_keycode_for(key: Option<Key>) -> Option<u8> {
 }
 
 fn main() {
-    let mut file = File::open("data/INVADERS").unwrap();
+    let mut file = File::open("data/TETRIS").unwrap();
     let mut data = Vec::<u8>::new();
     file.read_to_end(&mut data).expect("Failed to read rom fil/File Not Found");
 
@@ -59,10 +59,12 @@ fn main() {
         panic!("{}", e);
     });
 
-    window.limit_update_rate(Some(std::time::Duration::from_micros(16600)));
+    //window.limit_update_rate(Some(std::time::Duration::from_micros(50)));
 
     let mut chip8 = Chip8::new();
     chip8.load_rom(&data);
+
+    println!("printing ram {:?}", chip8.print_ram());
 
     let mut last_key_update_time = Instant::now();
     let mut last_instruction_run_time = Instant::now();
@@ -84,7 +86,7 @@ fn main() {
         }
 
         let diff_update_time = Instant::now() - last_instruction_run_time;
-        if diff_update_time > Duration::from_millis(1) {
+        if diff_update_time > Duration::from_millis(8) {
             chip8.run_instruction();
             last_instruction_run_time = Instant::now();
         }

@@ -73,6 +73,10 @@ impl Bus {
         self.display.get_display_buffer()
     }
 
+    pub fn print_ram(&self) {
+        self.ram.print_ram();
+    }
+
 }
 
 impl fmt::Debug for Bus {

@@ -34,4 +34,9 @@ impl Chip8 {
     pub fn set_key_pressed(&mut self, key: Option<u8>) {
         self.bus.set_key_pressed(key);
     }
+
+    pub fn print_ram(&self) {
+        self.bus.print_ram();
+    }
+    
 }

@@ -25,6 +25,11 @@ impl Display {
         
         for _ in 0..8 {
             let index = Display::get_index_from_coords(coord_x, coord_y);
+
+            if index >= WIDTH * HEIGHT {
+                continue;
+            }
+
             let bit = (b & 0b1000_0000) >> 7;
             let prev_value = self.screen[index];
             self.screen[index] ^= bit;

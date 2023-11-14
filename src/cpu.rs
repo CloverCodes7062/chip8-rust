@@ -1,5 +1,4 @@
 use core::{panic, fmt};
-use std::{fmt::Debug, ops::Range};
 use crate::bus::Bus;
 use rand::Rng;
 pub const PROGRAM_START: u16 = 0x200;
@@ -143,6 +142,16 @@ impl Cpu {
                     _=> panic!("Unknown 0x8** instruction {:#X}:{:#X}", self.pc, instruction),
                 }
                 self.pc += 2;
+            },
+            0x9 => {
+                // skips next instruction if Reg VX doesn't equal Reg VY
+                let vx = self.read_reg_vx(x);
+                let vy = self.read_reg_vx(y);
+                if vx != vy {
+                    self.pc += 4;
+                } else {
+                    self.pc += 2;
+                }
             },
             0xC => {
                 // sets Reg VX to result of bitwise AND on random number and NN
