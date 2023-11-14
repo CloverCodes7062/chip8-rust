@@ -1,7 +1,8 @@
 use chip8::Chip8;
-use minifb::{Key, KeyRepeat, Scale, ScaleMode, Window, WindowOptions};
+use minifb::{Key, KeyRepeat, Window, WindowOptions};
 use std::io::Read;
-use std::{fs::File, mem::Discriminant};
+use std::fs::File;
+use std::time::Instant;
 
 use crate::display::Display;
 
@@ -38,14 +39,14 @@ fn get_chip8_keycode_for(key: Option<Key>) -> Option<u8> {
 }
 
 fn main() {
-    let mut file = File::open("data/INVADERS").unwrap();
+    let mut file = File::open("data/MERLIN").unwrap();
     let mut data = Vec::<u8>::new();
-    file.read_to_end(&mut data);
+    file.read_to_end(&mut data).expect("Failed to read rom fil/File Not Found");
 
-    println!();
     let WIDTH = 640;
     let HEIGHT = 320;
 
+    // A buffer than contains the color of each pixel of the screen in ARGB format
     let mut buffer: Vec<u32> = vec![0; WIDTH * HEIGHT];
 
     let mut window = Window::new(
@@ -63,8 +64,10 @@ fn main() {
     let mut chip8 = Chip8::new();
     chip8.load_rom(&data);
 
-    while window.is_open() && !window.is_key_down(Key::Escape) {
+    let mut last_key_update_time = Instant::now();
+    let mut last_instruction_run_time = Instant::now();
 
+    while window.is_open() && !window.is_key_down(Key::Escape) {
         let keys_pressed = window.get_keys_pressed(KeyRepeat::Yes);
         let mut key = None;
 
@@ -72,9 +75,20 @@ fn main() {
             key = Some(keys_pressed[0]);
         }
 
+        let diff_update_time = Instant::now() - last_key_update_time;
         let chip8_key = get_chip8_keycode_for(key);
-        chip8.set_key_pressed(chip8_key);
-        chip8.run_instruction();
+
+        if chip8_key.is_some() || diff_update_time.as_millis() >= 250 {
+            last_key_update_time = Instant::now();
+            chip8.set_key_pressed(chip8_key);
+        }
+
+        let diff_update_time = Instant::now() - last_instruction_run_time;
+        if diff_update_time.as_millis() > 16 {
+            chip8.run_instruction();
+            last_instruction_run_time = Instant::now();
+        }
+
         let chip8_buffer = chip8.get_display_buffer();
 
         for y in 0..HEIGHT {

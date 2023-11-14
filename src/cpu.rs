@@ -1,7 +1,7 @@
 use core::{panic, fmt};
-use std::fmt::Debug;
+use std::{fmt::Debug, ops::Range};
 use crate::bus::Bus;
-
+use rand::Rng;
 pub const PROGRAM_START: u16 = 0x200;
 
 pub struct Cpu {
@@ -80,6 +80,16 @@ impl Cpu {
                     self.pc += 2;
                 }
             },
+            0x5 => {
+                // skips next instruction if Reg VX equals Reg VY
+                let vx = self.read_reg_vx(x);
+                let vy = self.read_reg_vx(y);
+                if vx == vy {
+                    self.pc += 4;
+                } else {
+                    self.pc += 2;
+                }
+            },
             0x6 => {
                 // sets Reg VX to NN
                 self.write_reg_vx(x, nn);
@@ -125,13 +135,20 @@ impl Cpu {
                         }
                     },
                     6 => {
-                        // Vx=Vy=Vy>>1
+                        // Vx=Vy>>1
                         self.write_reg_vx(0xF, vy & 0x1);
                         self.write_reg_vx(y, vy >> 1);
                         self.write_reg_vx(x, vy >> 1);
                     },
                     _=> panic!("Unknown 0x8** instruction {:#X}:{:#X}", self.pc, instruction),
                 }
+                self.pc += 2;
+            },
+            0xC => {
+                // sets Reg VX to result of bitwise AND on random number and NN
+                let mut rng = rand::thread_rng();
+                let random_number:u8 = rng.gen();
+                self.write_reg_vx(x, random_number & nn);
                 self.pc += 2;
             },
             0xD => {
@@ -195,6 +212,33 @@ impl Cpu {
                     },
                     0x18 => {
                         // TODO sets sound timer to Reg VX
+                        self.pc += 2;
+                    },
+                    0x29 => {
+                        // sets I to location of sprite for digit VX
+                        // multiply VX by 5 because each sprite is 5 bytes long
+                        let vx = self.read_reg_vx(x);
+                        self.i = vx as u16 * 5;
+                        self.pc += 2;
+                    },
+                    0x33 => {
+                        // stores binary-coded decimal representation of Reg VX at addresses I, I+1, and I+2
+                        let vx = self.read_reg_vx(x);
+                        let hundreds = vx / 100;
+                        let tens = (vx % 100) / 10;
+                        let ones = vx % 10;
+                        bus.ram_write_byte(self.i, hundreds);
+                        bus.ram_write_byte(self.i + 1, tens);
+                        bus.ram_write_byte(self.i + 2, ones);
+                        self.pc += 2;
+                    },
+                    0x55 => {
+                        // Stores the values from Reg VX to memory starting at address I, offset by 1 each iteration
+                        for index in 0..x+1 {
+                            let value = self.read_reg_vx(index);
+                            bus.ram_write_byte(self.i + index as u16, value);
+                        }
+                        self.i += x as u16 + 1;
                         self.pc += 2;
                     },
                     0x65 => {
