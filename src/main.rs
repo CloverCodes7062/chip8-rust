@@ -2,8 +2,7 @@ use chip8::Chip8;
 use minifb::{Key, KeyRepeat, Window, WindowOptions};
 use std::io::Read;
 use std::fs::File;
-use std::time::Instant;
-
+use std::time::{Instant, Duration, self};
 use crate::display::Display;
 
 mod bus;
@@ -34,12 +33,13 @@ fn get_chip8_keycode_for(key: Option<Key>) -> Option<u8> {
         Some(Key::X) => Some(0x0),
         Some(Key::C) => Some(0xB),
         Some(Key::V) => Some(0xF),
+
         _ => None,
     }
 }
 
 fn main() {
-    let mut file = File::open("data/MERLIN").unwrap();
+    let mut file = File::open("data/INVADERS").unwrap();
     let mut data = Vec::<u8>::new();
     file.read_to_end(&mut data).expect("Failed to read rom fil/File Not Found");
 
@@ -78,13 +78,13 @@ fn main() {
         let diff_update_time = Instant::now() - last_key_update_time;
         let chip8_key = get_chip8_keycode_for(key);
 
-        if chip8_key.is_some() || diff_update_time.as_millis() >= 250 {
+        if chip8_key.is_some() || diff_update_time >= Duration::from_millis(250) {
             last_key_update_time = Instant::now();
             chip8.set_key_pressed(chip8_key);
         }
 
         let diff_update_time = Instant::now() - last_instruction_run_time;
-        if diff_update_time.as_millis() > 16 {
+        if diff_update_time > Duration::from_millis(1) {
             chip8.run_instruction();
             last_instruction_run_time = Instant::now();
         }
