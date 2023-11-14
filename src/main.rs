@@ -78,7 +78,7 @@ fn main() {
         let diff_update_time = Instant::now() - last_key_update_time;
         let chip8_key = get_chip8_keycode_for(key);
 
-        if chip8_key.is_some() || diff_update_time >= Duration::from_millis(250) {
+        if chip8_key.is_some() || diff_update_time >= Duration::from_millis(500) {
             last_key_update_time = Instant::now();
             chip8.set_key_pressed(chip8_key);
         }

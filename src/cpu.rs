@@ -26,7 +26,7 @@ impl Cpu {
         let lo = bus.ram_read_byte(self.pc + 1) as u16;
         let instruction:u16 = (hi << 8) | lo;
 
-        println!("Instruction Read instruction {:#X}: self.pc {:#X}, hi: {:#X}, lo: {:#X}", instruction, self.pc, hi, lo);
+        //println!("Instruction Read instruction {:#X}: self.pc {:#X}, hi: {:#X}, lo: {:#X}", instruction, self.pc, hi, lo);
 
 
         let nnn = instruction & 0x0FFF;
@@ -35,7 +35,7 @@ impl Cpu {
         let x = ((instruction & 0x0F00) >> 8) as u8;
         let y = ((instruction & 0x00F0) >> 4) as u8;
 
-        println!("nnn={:?}, nn={:?}, n={:?}, x={}, y={}", nnn, nn, n, x, y);
+        //println!("nnn={:?}, nn={:?}, n={:?}, x={}, y={}", nnn, nn, n, x, y);
 
         match (instruction & 0xF000) >> 12{
             0x0 => {
